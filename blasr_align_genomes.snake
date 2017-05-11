@@ -34,10 +34,10 @@ rule samToBed:
 
 
 rule runBlasr:
-     message: "Aligning query to target"
+     message: "Aligning query to target using processors = {:s}".format( szProcessors )
      input:   BL=config["install"] + "/bin/blasr", TARGET=_get_target_files, QUERY=_get_query_files
      output:  "{target}-{query}-aligned.sam", "{target}-{query}-unaligned.fasta"
-     params: sge_opts="-l mfree={szBlasrMem} -pe serial {szProcessors}".format( szBlasrMem = szBlasrMem, szProcessors = szProcessors), paramsprocessors={szProcessors}
+     params: sge_opts="-l mfree={szBlasrMem} -pe serial {szProcessors:s}".format( szBlasrMem = szBlasrMem, szProcessors = szProcessors), paramsprocessors=szProcessors
      #params:
      shell:   """
               {input.BL} -clipping hard -alignContigs -sam -minMapQV 30 -nproc {params.paramsprocessors} -minPctIdentity 50 -unaligned {output[1]} {input.QUERY} {input.TARGET} -out {output[0]}
