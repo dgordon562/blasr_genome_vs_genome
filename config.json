@@ -1,0 +1,10 @@
+{
+        "install" :"/net/eichler/vol2/home/dgordon/pipelines/smartie/smartie-sv",
+        "targets" : {
+                  "hg38" : "/net/eichler/vol2/eee_shared/assemblies/hg38/indexes/blasr/ucsc.hg38.no_alts.fasta"
+                  },
+        "queries" : {
+                 "clint6_unzip" : "/net/eichler/vol26/7200/dgordon/clint6/unzip_analysis/all_p_ctg.fa"
+           },
+        "processors" : "24"
+}

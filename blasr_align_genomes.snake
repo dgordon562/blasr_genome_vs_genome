@@ -1,0 +1,45 @@
+import datetime
+
+shell.prefix("source config.sh; set -eo pipefail ; ")
+
+localrules: callSVs
+
+configfile: "config.json"
+#configfile: "cluster.config.sge.json"
+
+szProcessors=config["processors"]
+
+szBlasrMem = "{:.2f}G".format( 60.0 / float( szProcessors ) )
+print( "will run blasr with {:s} processors each with {:s} memory".format( szProcessors, szBlasrMem ) )
+
+def _get_target_files(wildcards):
+    return config["targets"][wildcards.target]
+
+def _get_query_files(wildcards):
+        return config["queries"][wildcards.query]
+
+rule all_done:
+     input: expand("{target}-{query}-aligned.bed", target=config["targets"], query=config["queries"])
+
+
+rule samToBed:
+	message: "Converting sam to bed"
+	input: "{target}-{query}-aligned.sam"
+	output:  "{target}-{query}-aligned.bed"
+	params: sge_opts="-l mfree=10G"
+	run:
+		szCommand = "~/pipelines/blasr_genome_vs_genome/samToBed " + str( input ) + " --reportAccuracy >" + str( output )
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+
+
+rule runBlasr:
+     message: "Aligning query to target"
+     input:   BL=config["install"] + "/bin/blasr", TARGET=_get_target_files, QUERY=_get_query_files
+     output:  "{target}-{query}-aligned.sam", "{target}-{query}-unaligned.fasta"
+     params: sge_opts="-l mfree={szBlasrMem} -pe serial {szProcessors}".format( szBlasrMem = szBlasrMem, szProcessors = szProcessors), paramsprocessors={szProcessors}
+     #params:
+     shell:   """
+              {input.BL} -clipping hard -alignContigs -sam -minMapQV 30 -nproc {params.paramsprocessors} -minPctIdentity 50 -unaligned {output[1]} {input.QUERY} {input.TARGET} -out {output[0]}
+     """
+
