@@ -15,6 +15,9 @@ print( "will run blasr with {:s} processors each with {:s} memory".format( szPro
 def _get_target_files(wildcards):
     return config["targets"][wildcards.target]
 
+def _get_target_sa_files( wildcards ):
+    return config["targets"][wildcards.target] + ".sa"
+
 def _get_query_files(wildcards):
         return config["queries"][wildcards.query]
 
@@ -35,7 +38,7 @@ rule samToBed:
 
 rule runBlasr:
      message: "Aligning query to target using processors = {:s}".format( szProcessors )
-     input:   BL=config["install"] + "/bin/blasr", TARGET=_get_target_files, QUERY=_get_query_files
+     input:   BL=config["install"] + "/bin/blasr", TARGET=_get_target_files, QUERY=_get_query_files, SA_FILE = _get_target_sa_files
      output:  "{target}-{query}-aligned.sam", "{target}-{query}-unaligned.fasta"
      params: sge_opts="-l mfree={szBlasrMem} -pe serial {szProcessors:s}".format( szBlasrMem = szBlasrMem, szProcessors = szProcessors), paramsprocessors=szProcessors
      #params:
@@ -43,3 +46,10 @@ rule runBlasr:
               {input.BL} -clipping hard -alignContigs -sam -minMapQV 30 -nproc {params.paramsprocessors} -minPctIdentity 50 -unaligned {output[1]} {input.QUERY} {input.TARGET} -out {output[0]}
      """
 
+rule makeSA:
+     message: "making .sa file "
+     input: FASTA="{fasta_file}", SAWRITER=config["install"] + "/bin/sawriter"
+     output: "{fasta_file}.sa"
+     params: sge_opts="-l mfree=120G"
+     shell: "{input.SAWRITER} {input.FASTA}"
+           
