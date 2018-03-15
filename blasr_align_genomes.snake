@@ -9,7 +9,8 @@ configfile: "config.json"
 
 szProcessors=config["processors"]
 
-szBlasrMem = "{:.2f}G".format( 60.0 / float( szProcessors ) )
+#szBlasrMem = "{:.2f}G".format( 60.0 / float( szProcessors ) )
+szBlasrMem = "5G"
 print( "will run blasr with {:s} processors each with {:s} memory".format( szProcessors, szBlasrMem ) )
 
 def _get_target_files(wildcards):
@@ -31,9 +32,15 @@ rule samToBed:
 	output:  "{target}-{query}-aligned.bed"
 	params: sge_opts="-l mfree=10G"
 	run:
-		szCommand = "~/pipelines/blasr_genome_vs_genome/samToBed " + str( input ) + " --reportAccuracy >" + str( output )
+		szCommand = "~dgordon/pipelines/blasr_genome_vs_genome/samToBed " + str( input ) + " --reportAccuracy >" + str( output )
 		print( "about to execute: " + szCommand )
 		shell( szCommand )
+		szCommand = "~dgordon/bin/splitBedForIdeogram.py " + str( output )
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+		szCommand = "convert_beds_for_ideograms.sh " + str( output )
+		print( "about to execute: " + szCommand )
+		shell( szCommand )        
 
 
 rule runBlasr:
@@ -43,7 +50,7 @@ rule runBlasr:
      params: sge_opts="-l mfree={szBlasrMem} -pe serial {szProcessors:s}".format( szBlasrMem = szBlasrMem, szProcessors = szProcessors), paramsprocessors=szProcessors
      #params:
      shell:   """
-              {input.BL} -clipping hard -alignContigs -sam -minMapQV 30 -nproc {params.paramsprocessors} -minPctIdentity 50 -unaligned {output[1]} {input.QUERY} {input.TARGET} -out {output[0]}
+              {input.BL} -clipping soft -alignContigs -sam -minMapQV 30 -nproc {params.paramsprocessors} -minPctIdentity 50 -unaligned {output[1]} {input.QUERY} {input.TARGET} -out {output[0]}
      """
 
 rule makeSA:
