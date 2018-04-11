@@ -38,7 +38,7 @@ rule samToBed:
 		szCommand = "~dgordon/bin/splitBedForIdeogram.py " + str( output )
 		print( "about to execute: " + szCommand )
 		shell( szCommand )
-		szCommand = "convert_beds_for_ideograms.sh " + str( output )
+		szCommand = "./convert_beds_for_ideograms.sh " + str( output )
 		print( "about to execute: " + szCommand )
 		shell( szCommand )        
 
